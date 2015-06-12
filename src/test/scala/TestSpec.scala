@@ -5,12 +5,22 @@ import Main.Orientation._
 import Main.Move._
 
 class TestSpec extends WordSpec with Matchers {
+  /**
+   * M: mountain — X: Treasure
+   *
+   *   → → ↓ . . .
+   *   . M ↓ . . .
+   *   . 1 2 . . .
+   *   . . . . . .
+   *   . . . . . M
+   *
+   */
   lazy val configuration =
     """
       |C 6 5
-      |T 1-1 1
-      |T 3-2 3
-      |M 5-3
+      |T 2-3 1
+      |T 3-3 2
+      |M 2-2
       |M 6-5
       |John 1-1 E AADADAGA Bunny
     """.stripMargin
@@ -25,19 +35,19 @@ class TestSpec extends WordSpec with Matchers {
     "return a list of treasures" in {
       val game = parseConfiguration(configuration)
       game.treasures.size shouldBe 2
-      game.treasures.head.position.x shouldBe 0
-      game.treasures.head.position.y shouldBe 0
+      game.treasures.head.position.x shouldBe 1
+      game.treasures.head.position.y shouldBe 2
       game.treasures.head.quantity shouldBe 1
       game.treasures(1).position.x shouldBe 2
-      game.treasures(1).position.y shouldBe 1
-      game.treasures(1).quantity shouldBe 3
+      game.treasures(1).position.y shouldBe 2
+      game.treasures(1).quantity shouldBe 2
     }
 
     "return a list of mountains" in {
       val game = parseConfiguration(configuration)
       game.mountains.size shouldBe 2
-      game.mountains.head.position.x shouldBe 4
-      game.mountains.head.position.y shouldBe 2
+      game.mountains.head.position.x shouldBe 1
+      game.mountains.head.position.y shouldBe 1
       game.mountains(1).position.x shouldBe 5
       game.mountains(1).position.y shouldBe 4
     }
@@ -51,7 +61,7 @@ class TestSpec extends WordSpec with Matchers {
       game.players.head.orientation shouldBe East
       game.players.head.moves shouldBe List(Forward, Forward, Right, Forward, Right, Forward, Left, Forward)
       game.players.head.movesCounter shouldBe 0
-      game.players.head.treasures shouldBe 0
+      game.players.head.treasuresFound shouldBe Nil
     }
   }
 
@@ -59,11 +69,12 @@ class TestSpec extends WordSpec with Matchers {
     "return a new players' list" in {
       val game = start(parseConfiguration(configuration))
       game.players.size shouldBe 1
-      game.players.head.position.x shouldBe 1
+      game.players.head.position.x shouldBe 2
       game.players.head.position.y shouldBe 2
       game.players.head.orientation shouldBe South
       game.players.head.movesCounter shouldBe 8
-//      game.players.head.treasures shouldBe 4
+      game.players.head.treasuresFound.size shouldBe 1
+      game.players.head.treasuresFound.head.quantity shouldBe 2
     }
   }
 
