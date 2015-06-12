@@ -25,11 +25,11 @@ object Main {
     movesCounter: Int, treasuresFound: Seq[Treasure])
 
   def main(args: Array[String]): Unit = {
-    val configFile = args.head
-    val configuration = scala.io.Source.fromFile(configFile).getLines.mkString("\n")
-    val game = parseConfiguration(configuration)
+    val mapConfig = scala.io.Source.fromFile(args(0)).getLines.mkString("\n")
+    val playersConfig = scala.io.Source.fromFile(args(1)).getLines.mkString("\n")
+    val game = parseConfiguration(mapConfig, playersConfig)
 
-    start(game)
+    start(game, draw = true)
   }
 
   def moveForward(orientation: Orientation, position: Position, game: Game): Position = {
@@ -71,8 +71,8 @@ object Main {
     }
   }
 
-  def start(game: Game): Game = {
-    def ƒ(game: Game, draw: Boolean = false): Game = {
+  def start(game: Game, draw: Boolean = false): Game = {
+    def ƒ(game: Game): Game = {
       if (draw) drawGame(game)
 
       val player = game.players.head
@@ -137,7 +137,13 @@ object Main {
     sb.toString()
   }
 
-  def parseConfiguration(config: String): Game = {
+  def parseConfiguration(mapConfig: String, playersConfig: String) = {
+    val (map, treasures, mountains) = parseMapConfiguration(mapConfig)
+    val players                     = parsePlayersConfiguration(playersConfig)
+    Game(map, treasures, mountains, players)
+  }
+
+  def parseMapConfiguration(config: String): (Map, Seq[Treasure], Seq[Mountain]) = {
     val splitConfig = config.split("\n")
 
     val mapLine = splitConfig.filter(_.startsWith("C ")).head
@@ -157,19 +163,19 @@ object Main {
       Mountain(position)
     }
 
-    val players: Seq[Player] = splitConfig
-      .filter(_.trim.nonEmpty)
-      .filter(l => !l.startsWith("C ") && !l.startsWith("T ") && !l.startsWith("M "))
-      .map { line =>
-        val splitLine = line.split(" ")
-        val name = splitLine(4)
-        val position = Position(x = splitLine(1).split("-")(0).toLong - 1,
-          y = splitLine(1).split("-")(1).toLong - 1)
-        val orientation = Orientation.withName(splitLine(2))
-        val moves: List[Move] = splitLine(3).map(c => Move.withName(c.toString)).toList
-        Player(name, position, orientation, moves, movesCounter = 0, treasuresFound = Nil)
-      }.toList
-
-    Game(map, treasures, mountains, players)
+    (map, treasures, mountains)
   }
+
+  def parsePlayersConfiguration(config: String): Seq[Player] = config.split("\n")
+    .filter(_.trim.nonEmpty)
+    .filter(l => !l.startsWith("C ") && !l.startsWith("T ") && !l.startsWith("M "))
+    .map { line =>
+    val splitLine = line.split(" ")
+    val name = splitLine(4)
+    val position = Position(x = splitLine(1).split("-")(0).toLong - 1,
+      y = splitLine(1).split("-")(1).toLong - 1)
+    val orientation = Orientation.withName(splitLine(2))
+    val moves: List[Move] = splitLine(3).map(c => Move.withName(c.toString)).toList
+    Player(name, position, orientation, moves, movesCounter = 0, treasuresFound = Nil)
+  }.toList
 }

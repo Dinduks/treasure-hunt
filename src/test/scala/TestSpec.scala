@@ -8,66 +8,72 @@ class TestSpec extends WordSpec with Matchers {
   /**
    * M: mountain — X: Treasure
    *
-   *   → → ↓ . . .
-   *   . M ↓ . . .
+   *   . . . . . .
+   *   . M . . . .
    *   . 1 2 . . .
    *   . . . . . .
    *   . . . . . M
    *
    */
-  lazy val configuration =
+  lazy val mapConfig =
     """
       |C 6 5
       |T 2-3 1
       |T 3-3 2
       |M 2-2
       |M 6-5
+    """.stripMargin
+  
+  lazy val playersConfig =
+    """
       |John 1-1 E AADADAGA Bunny
     """.stripMargin
 
-  "parseConfiguration" should {
+  "parseMapConfiguration" should {
     "return a map" in {
-      val game = parseConfiguration(configuration)
-      game.map.width shouldBe 6
-      game.map.height shouldBe 5
+      val (map, _, _) = parseMapConfiguration(mapConfig)
+      map.width shouldBe 6
+      map.height shouldBe 5
     }
 
     "return a list of treasures" in {
-      val game = parseConfiguration(configuration)
-      game.treasures.size shouldBe 2
-      game.treasures.head.position.x shouldBe 1
-      game.treasures.head.position.y shouldBe 2
-      game.treasures.head.quantity shouldBe 1
-      game.treasures(1).position.x shouldBe 2
-      game.treasures(1).position.y shouldBe 2
-      game.treasures(1).quantity shouldBe 2
+      val (_, treasures, _) = parseMapConfiguration(mapConfig)
+      treasures.size shouldBe 2
+      treasures.head.position.x shouldBe 1
+      treasures.head.position.y shouldBe 2
+      treasures.head.quantity shouldBe 1
+      treasures(1).position.x shouldBe 2
+      treasures(1).position.y shouldBe 2
+      treasures(1).quantity shouldBe 2
     }
 
     "return a list of mountains" in {
-      val game = parseConfiguration(configuration)
-      game.mountains.size shouldBe 2
-      game.mountains.head.position.x shouldBe 1
-      game.mountains.head.position.y shouldBe 1
-      game.mountains(1).position.x shouldBe 5
-      game.mountains(1).position.y shouldBe 4
+      val (_, _, mountains) = parseMapConfiguration(mapConfig)
+      mountains.size shouldBe 2
+      mountains.head.position.x shouldBe 1
+      mountains.head.position.y shouldBe 1
+      mountains(1).position.x shouldBe 5
+      mountains(1).position.y shouldBe 4
     }
+  }
 
+  "parsePlayersConfiguration" should {
     "return a list of players" in {
-      val game = parseConfiguration(configuration)
-      game.players.size shouldBe 1
-      game.players.head.name shouldBe "Bunny"
-      game.players.head.position.x shouldBe 0
-      game.players.head.position.y shouldBe 0
-      game.players.head.orientation shouldBe East
-      game.players.head.moves shouldBe List(Forward, Forward, Right, Forward, Right, Forward, Left, Forward)
-      game.players.head.movesCounter shouldBe 0
-      game.players.head.treasuresFound shouldBe Nil
+      val players = parsePlayersConfiguration(playersConfig)
+      players.size shouldBe 1
+      players.head.name shouldBe "Bunny"
+      players.head.position.x shouldBe 0
+      players.head.position.y shouldBe 0
+      players.head.orientation shouldBe East
+      players.head.moves shouldBe List(Forward, Forward, Right, Forward, Right, Forward, Left, Forward)
+      players.head.movesCounter shouldBe 0
+      players.head.treasuresFound shouldBe Nil
     }
   }
 
   "start" should {
     "return a new players' list" in {
-      val game = start(parseConfiguration(configuration))
+      val game = start(parseConfiguration(mapConfig, playersConfig))
       game.players.size shouldBe 1
       game.players.head.position.x shouldBe 2
       game.players.head.position.y shouldBe 2
@@ -79,7 +85,7 @@ class TestSpec extends WordSpec with Matchers {
   }
 
   "moveFoward" should {
-    lazy val game = parseConfiguration(configuration)
+    lazy val game = parseConfiguration(mapConfig, playersConfig)
 
     "move to the north" in {
       val position = moveForward(North, Position(3, 2), game)
