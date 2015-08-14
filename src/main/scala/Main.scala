@@ -2,17 +2,17 @@ object Main {
   object Orientation extends Enumeration {
     type Orientation = Value
     val North = Value("N")
-    val East  = Value("E")
+    val East = Value("E")
     val South = Value("S")
-    val West  = Value("O")
+    val West = Value("O")
   }
   import Orientation._
 
   object Move extends Enumeration {
     type Move = Value
     val Forward = Value("A")
-    val Right   = Value("D")
-    val Left    = Value("G")
+    val Right = Value("D")
+    val Left = Value("G")
   }
   import Move._
 
@@ -21,8 +21,8 @@ object Main {
   case class Position(x: Long, y: Long)
   case class Treasure(position: Position, quantity: Long)
   case class Mountain(position: Position)
-  case class Player(name: String, position: Position, orientation: Orientation, moves: List[Move],
-    movesCounter: Int, treasuresFound: Seq[Treasure])
+  case class Player(name: String, position: Position, orientation: Orientation,
+    moves: Seq[Move], movesCounter: Int, treasuresFound: Seq[Treasure])
 
   def main(args: Array[String]): Unit = {
     val mapConfig = scala.io.Source.fromFile(args(0)).getLines.mkString("\n")
@@ -66,40 +66,59 @@ object Main {
 
     move match {
       case Right => successor(orientation)
-      case Left  => predecessor(orientation)
-      case _     => throw new Exception("This kind of move shouldn't be there.") // bhoo
+      case Left => predecessor(orientation)
+      case _ => throw new Exception("This kind of move shouldn't be there.") // bhoo
     }
   }
+
+  def isGameOver(players: Seq[Player]) =
+    !players.exists(p => p.movesCounter < p.moves.size)
 
   def start(game: Game, draw: Boolean = false): Game = {
     def ƒ(game: Game): Game = {
       if (draw) drawGame(game)
 
-      val player = game.players.head
-      if (player.movesCounter == player.moves.size) {
+      if (isGameOver(game.players)) {
         game
       } else {
-        val (position, orientation) = if (player.moves(player.movesCounter) == Move.Forward) {
-          val newPosition = moveForward(player.orientation, player.position, game)
-          val newOrientation = player.orientation
-          (newPosition, newOrientation)
-        } else {
-          val newPosition = player.position
-          val newOrientation: Orientation = turn(player.orientation, player.moves(player.movesCounter))
-          (newPosition, newOrientation)
+        def g(left: Seq[Player], rest: Seq[Player], treasures: Seq[Treasure]): (Seq[Player], Seq[Treasure]) = {
+          left match {
+            case Nil => (rest, treasures)
+            case _ =>
+              val player = left.head
+              val (newPlayer, gameTreasures) = if (player.movesCounter == player.moves.size) {
+                (player, game.treasures)
+              } else {
+                val (position, orientation) = if (player.moves(player.movesCounter) == Move.Forward) {
+                  val newPosition = moveForward(player.orientation, player.position, game)
+                  val newOrientation = player.orientation
+                  (newPosition, newOrientation)
+                } else {
+                  val newPosition = player.position
+                  val newOrientation: Orientation = turn(player.orientation, player.moves(player.movesCounter))
+                  (newPosition, newOrientation)
+                }
+
+                val (gameTreasures, playerTreasures) = game.treasures.find(_.position == position) match {
+                  case Some(treasure) => (game.treasures diff Seq(treasure), player.treasuresFound :+ treasure)
+                  case None => (game.treasures, player.treasuresFound)
+                }
+
+                val newPlayer = player.copy(position = position,
+                  orientation = orientation,
+                  movesCounter = player.movesCounter + 1,
+                  treasuresFound = playerTreasures)
+
+                (newPlayer, gameTreasures)
+              }
+
+              g(left.tail, rest :+ newPlayer, gameTreasures)
+          }
         }
 
-        val (gameTreasures, playerTreasures) = game.treasures.find(_.position == position) match {
-          case Some(treasure) => (game.treasures diff List(treasure), player.treasuresFound :+ treasure)
-          case None           => (game.treasures, player.treasuresFound)
-        }
+        val (players, treasures) = g(game.players, Nil, game.treasures)
 
-        val newPlayer = player.copy(position = position,
-          orientation = orientation,
-          movesCounter = player.movesCounter + 1,
-          treasuresFound = playerTreasures)
-
-        ƒ(game.copy(players = List(newPlayer), treasures = gameTreasures))
+        ƒ(game.copy(players = players, treasures = treasures))
       }
     }
 
@@ -124,9 +143,9 @@ object Main {
           val player = game.players.find(_.position == Position(i, j)).head
           player.orientation match {
             case North => sb.append(" ↑")
-            case East  => sb.append(" →")
+            case East => sb.append(" →")
             case South => sb.append(" ↓")
-            case West  => sb.append(" ←")
+            case West => sb.append(" ←")
           }
         } else {
           sb.append(" .")
@@ -139,7 +158,7 @@ object Main {
 
   def parseConfiguration(mapConfig: String, playersConfig: String) = {
     val (map, treasures, mountains) = parseMapConfiguration(mapConfig)
-    val players                     = parsePlayersConfiguration(playersConfig)
+    val players = parsePlayersConfiguration(playersConfig)
     Game(map, treasures, mountains, players)
   }
 
@@ -170,12 +189,12 @@ object Main {
     .filter(_.trim.nonEmpty)
     .filter(l => !l.startsWith("C ") && !l.startsWith("T ") && !l.startsWith("M "))
     .map { line =>
-    val splitLine = line.split(" ")
-    val name = splitLine(4)
-    val position = Position(x = splitLine(1).split("-")(0).toLong - 1,
-      y = splitLine(1).split("-")(1).toLong - 1)
-    val orientation = Orientation.withName(splitLine(2))
-    val moves: List[Move] = splitLine(3).map(c => Move.withName(c.toString)).toList
-    Player(name, position, orientation, moves, movesCounter = 0, treasuresFound = Nil)
-  }.toList
+      val splitLine = line.split(" ")
+      val name = splitLine(4)
+      val position = Position(x = splitLine(1).split("-")(0).toLong - 1,
+        y = splitLine(1).split("-")(1).toLong - 1)
+      val orientation = Orientation.withName(splitLine(2))
+      val moves: Seq[Move] = splitLine(3).map(c => Move.withName(c.toString)).toList
+      Player(name, position, orientation, moves, movesCounter = 0, treasuresFound = Nil)
+    }.toList
 }

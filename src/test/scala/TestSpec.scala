@@ -23,10 +23,11 @@ class TestSpec extends WordSpec with Matchers {
       |M 2-2
       |M 6-5
     """.stripMargin
-  
+
   lazy val playersConfig =
     """
-      |John 1-1 E AADADAGA Bunny
+      |Yolanda 1-1 E AADADAGAA HoneyBunny
+      |Ringo 6-4 E AAAADAAG Pumpkin
     """.stripMargin
 
   "parseMapConfiguration" should {
@@ -60,25 +61,29 @@ class TestSpec extends WordSpec with Matchers {
   "parsePlayersConfiguration" should {
     "return a list of players" in {
       val players = parsePlayersConfiguration(playersConfig)
-      players.size shouldBe 1
-      players.head.name shouldBe "Bunny"
+      players.size shouldBe 2
+      players.head.name shouldBe "HoneyBunny"
       players.head.position.x shouldBe 0
       players.head.position.y shouldBe 0
       players.head.orientation shouldBe East
-      players.head.moves shouldBe List(Forward, Forward, Right, Forward, Right, Forward, Left, Forward)
+      players.head.moves shouldBe List(Forward, Forward, Right, Forward, Right, Forward, Left, Forward, Forward)
       players.head.movesCounter shouldBe 0
       players.head.treasuresFound shouldBe Nil
+
+      players(1).name shouldBe "Pumpkin"
     }
   }
 
   "start" should {
     "return a new players' list" in {
       val game = start(parseConfiguration(mapConfig, playersConfig))
-      game.players.size shouldBe 1
+      val players = game.players.sortBy(_.name)
+      game.players.size shouldBe 2
+      game.players.head.name shouldBe "HoneyBunny"
       game.players.head.position.x shouldBe 2
-      game.players.head.position.y shouldBe 2
+      game.players.head.position.y shouldBe 3
       game.players.head.orientation shouldBe South
-      game.players.head.movesCounter shouldBe 8
+      game.players.head.movesCounter shouldBe 9
       game.players.head.treasuresFound.size shouldBe 1
       game.players.head.treasuresFound.head.quantity shouldBe 2
     }
@@ -142,21 +147,45 @@ class TestSpec extends WordSpec with Matchers {
       position.x shouldBe 5
       position.y shouldBe 3
     }
+
+    "don't move if there's a treasure to pick up" in {
+      val position = moveForward(South, Position(2, 2), game)
+      position.x shouldBe 2
+      position.y shouldBe 3
+    }
   }
 
   "turn" should {
     "turn to the left" in {
       turn(North, Left) shouldBe West
-      turn(East,  Left) shouldBe North
+      turn(East, Left) shouldBe North
       turn(South, Left) shouldBe East
-      turn(West,  Left) shouldBe South
+      turn(West, Left) shouldBe South
     }
 
     "turn to the right" in {
       turn(North, Right) shouldBe East
-      turn(East,  Right) shouldBe South
+      turn(East, Right) shouldBe South
       turn(South, Right) shouldBe West
-      turn(West,  Right) shouldBe North
+      turn(West, Right) shouldBe North
+    }
+  }
+
+  "isGameOver" should {
+    "tell if the game is over" in {
+      val players = List(
+        Player("", null, null, List(Forward), 1, Nil),
+        Player("", null, null, List(Forward, Left), 2, Nil)
+      )
+      isGameOver(players) shouldBe true
+    }
+
+    "tell if the game is not over" in {
+      val players = List(
+        Player("", null, null, List(Forward), 0, Nil),
+        Player("", null, null, List(Forward, Left), 2, Nil)
+      )
+      isGameOver(players) shouldBe false
     }
   }
 }
