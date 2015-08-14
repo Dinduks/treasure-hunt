@@ -107,8 +107,8 @@ object Main {
   }
 
   def drawGame(game: Game, delay: Int = 500): Unit = {
+    println("\u001b[2J\u001b[1;1H")
     println(buildDrawableGame(game))
-    println("=" * (game.map.width * 2))
     Thread.sleep(delay)
   }
 
