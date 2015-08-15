@@ -30,7 +30,7 @@ object Main {
     val playersConfig = scala.io.Source.fromFile(args(1)).getLines.mkString("\n")
     val game = parseConfiguration(mapConfig, playersConfig)
 
-    start(game, draw = true)
+    start(game, Option(g => drawGame(g)))
   }
 
   def moveForward(orientation: Orientation, position: Position,
@@ -82,9 +82,9 @@ object Main {
   def isGameOver(players: Seq[Player]) =
     !players.exists(p => p.movesCounter < p.moves.size)
 
-  def start(game: Game, draw: Boolean = false): Game = {
+  def start(game: Game, drawFunc: Option[Game => Unit] = None): Game = {
     def step(game: Game): Game = {
-      if (draw) drawGame(game)
+      drawFunc.map(_.apply(game))
 
       if (isGameOver(game.players)) {
         val players = game.players.map { player => // we want to ignore the "Stay" moves
