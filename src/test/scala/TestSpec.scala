@@ -27,6 +27,7 @@ class TestSpec extends WordSpec with Matchers {
     """
       |Yolanda 1-1 E AADADAGA HoneyBunny
       |Ringo 6-4 O AAAADAAG Pumpkin
+      |Vincent 6-1 O AAAAADD Vega
     """.stripMargin
 
   "parseMapConfiguration" should {
@@ -60,7 +61,7 @@ class TestSpec extends WordSpec with Matchers {
   "parsePlayersConfiguration" should {
     "return a list of players" in {
       val players = parsePlayersConfiguration(playersConfig)
-      players.size shouldBe 2
+      players.size shouldBe 3
       players.head.name shouldBe "HoneyBunny"
       players.head.position.x shouldBe 0
       players.head.position.y shouldBe 0
@@ -70,6 +71,7 @@ class TestSpec extends WordSpec with Matchers {
       players.head.treasuresFound shouldBe Nil
 
       players(1).name shouldBe "Pumpkin"
+      players(2).name shouldBe "Vega"
     }
   }
 
@@ -77,7 +79,7 @@ class TestSpec extends WordSpec with Matchers {
     "return a new players' list" in {
       val game = start(parseConfiguration(mapConfig, playersConfig))
       val players = game.players.sortBy(_.name)
-      game.players.size shouldBe 2
+      game.players.size shouldBe 3
 
       game.players.head.name shouldBe "HoneyBunny"
       game.players.head.position.x shouldBe 2
@@ -94,6 +96,13 @@ class TestSpec extends WordSpec with Matchers {
       game.players(1).movesCounter shouldBe 8
       game.players(1).treasuresFound.size shouldBe 1
       game.players(1).treasuresFound.head.quantity shouldBe 1
+
+      game.players(2).name shouldBe "Vega"
+      game.players(2).position.x shouldBe 1
+      game.players(2).position.y shouldBe 0
+      game.players(2).orientation shouldBe East
+      game.players(2).movesCounter shouldBe 7
+      game.players(2).treasuresFound.size shouldBe 0
     }
   }
 

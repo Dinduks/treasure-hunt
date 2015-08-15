@@ -33,7 +33,8 @@ object Main {
     start(game, draw = true)
   }
 
-  def moveForward(orientation: Orientation, position: Position, game: Game): Position = {
+  def moveForward(orientation: Orientation, position: Position,
+    game: Game, otherPlayers: Seq[Player] = Nil): Position = {
     val (x, y) = orientation match {
       case Orientation.North => (position.x, position.y - 1)
       case Orientation.East => (position.x + 1, position.y)
@@ -49,9 +50,14 @@ object Main {
     else if (y > game.map.height - 1) game.map.height - 1
     else y
 
-    game.mountains.find(_.position == Position(newX, newY))
-      .map(_ => position)
-      .getOrElse(Position(newX, newY))
+    val newPosition = Position(newX, newY)
+
+    if (game.mountains.exists(_.position == newPosition) ||
+      otherPlayers.exists(_.position == newPosition)) {
+      position
+    } else {
+      newPosition
+    }
   }
 
   def turn(orientation: Orientation, move: Move): Orientation = {
@@ -95,7 +101,8 @@ object Main {
     step(game)
   }
 
-  private def computeMoves(left: Seq[Player], rest: Seq[Player], treasures: Seq[Treasure], game: Game): (Seq[Player], Seq[Treasure]) = left match {
+  private def computeMoves(left: Seq[Player], rest: Seq[Player],
+    treasures: Seq[Treasure], game: Game): (Seq[Player], Seq[Treasure]) = left match {
     case Nil => (rest, treasures)
     case _ =>
       val player = left.head
@@ -104,7 +111,7 @@ object Main {
       } else {
         val (position, orientation: Orientation) = player.moves(player.movesCounter) match {
           case Forward =>
-            val newPosition = moveForward(player.orientation, player.position, game)
+            val newPosition = moveForward(player.orientation, player.position, game, rest)
             (newPosition, player.orientation)
           case _ =>
             val newOrientation: Orientation = turn(player.orientation, player.moves(player.movesCounter))
@@ -116,12 +123,16 @@ object Main {
           case None => (false, game.treasures, player.treasuresFound)
         }
 
-        val moves: Seq[Move] = if (!foundTreasure) {
-          player.moves
-        } else {
+        val moves: Seq[Move] = if (foundTreasure) {
           val moves = player.moves
           val counter = player.movesCounter
           (moves.slice(0, counter + 1) :+ Stay) ++ moves.slice(counter + 1, moves.size)
+        } else if (rest.exists(_.position == position)) {
+          val moves = player.moves
+          val counter = player.movesCounter
+          (moves.slice(0, counter + 1) :+ Stay) ++ moves.slice(counter + 2, moves.size)
+        } else {
+          player.moves
         }
 
         val newPlayer = player.copy(position = position,
