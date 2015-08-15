@@ -63,13 +63,9 @@ object Main {
   def turn(orientation: Orientation, move: Move): Orientation = {
     val o = Seq(North, East, South, West)
 
-    def predecessor(orientation: Orientation) = {
-      o((o.indexOf(orientation) + 3) % 4)
-    }
+    def predecessor(orientation: Orientation) = o((o.indexOf(orientation) + 3) % 4)
 
-    def successor(orientation: Orientation) = {
-      o((o.indexOf(orientation) + 1) % 4)
-    }
+    def successor(orientation: Orientation) = o((o.indexOf(orientation) + 1) % 4)
 
     move match {
       case Right => successor(orientation)
@@ -109,7 +105,7 @@ object Main {
       val (newPlayer, gameTreasures) = if (player.movesCounter == player.moves.size) {
         (player, game.treasures)
       } else {
-        val (position, orientation: Orientation) = player.moves(player.movesCounter) match {
+        val (position, orientation) = player.moves(player.movesCounter) match {
           case Forward =>
             val newPosition = moveForward(player.orientation, player.position, game, rest)
             (newPosition, player.orientation)
