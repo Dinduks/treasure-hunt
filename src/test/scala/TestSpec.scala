@@ -1,4 +1,3 @@
-
 import org.scalatest._
 import Main._
 import Main.Orientation._
@@ -26,8 +25,8 @@ class TestSpec extends WordSpec with Matchers {
 
   lazy val playersConfig =
     """
-      |Yolanda 1-1 E AADADAGAA HoneyBunny
-      |Ringo 6-4 E AAAADAAG Pumpkin
+      |Yolanda 1-1 E AADADAGA HoneyBunny
+      |Ringo 6-4 O AAAADAAG Pumpkin
     """.stripMargin
 
   "parseMapConfiguration" should {
@@ -66,7 +65,7 @@ class TestSpec extends WordSpec with Matchers {
       players.head.position.x shouldBe 0
       players.head.position.y shouldBe 0
       players.head.orientation shouldBe East
-      players.head.moves shouldBe List(Forward, Forward, Right, Forward, Right, Forward, Left, Forward, Forward)
+      players.head.moves shouldBe List(Forward, Forward, Right, Forward, Right, Forward, Left, Forward)
       players.head.movesCounter shouldBe 0
       players.head.treasuresFound shouldBe Nil
 
@@ -79,13 +78,22 @@ class TestSpec extends WordSpec with Matchers {
       val game = start(parseConfiguration(mapConfig, playersConfig))
       val players = game.players.sortBy(_.name)
       game.players.size shouldBe 2
+
       game.players.head.name shouldBe "HoneyBunny"
       game.players.head.position.x shouldBe 2
-      game.players.head.position.y shouldBe 3
+      game.players.head.position.y shouldBe 2
       game.players.head.orientation shouldBe South
-      game.players.head.movesCounter shouldBe 9
+      game.players.head.movesCounter shouldBe 8
       game.players.head.treasuresFound.size shouldBe 1
       game.players.head.treasuresFound.head.quantity shouldBe 2
+
+      game.players(1).name shouldBe "Pumpkin"
+      game.players(1).position.x shouldBe 1
+      game.players(1).position.y shouldBe 2
+      game.players(1).orientation shouldBe West
+      game.players(1).movesCounter shouldBe 8
+      game.players(1).treasuresFound.size shouldBe 1
+      game.players(1).treasuresFound.head.quantity shouldBe 1
     }
   }
 
