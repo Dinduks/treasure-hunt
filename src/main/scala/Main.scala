@@ -33,6 +33,28 @@ object Main {
     start(game, Option(g => drawGame(g)))
   }
 
+  def start(game: Game, drawFunc: Option[Game => Unit] = None): Game = {
+    def step(game: Game): Game = {
+      drawFunc.map(_.apply(game))
+
+      if (isGameOver(game.players)) {
+        val players = game.players.map { player => // we want to ignore the "Stay" moves
+          val numberOfStays = player.moves.count(_ == Stay)
+          player.copy(movesCounter = player.movesCounter - numberOfStays)
+        }
+        game.copy(players = players)
+      } else {
+        val (players, treasures) = computeMoves(game.players, Nil, game.treasures, game)
+        step(game.copy(players = players, treasures = treasures))
+      }
+    }
+
+    step(game)
+  }
+
+  def isGameOver(players: Seq[Player]) =
+    !players.exists(p => p.movesCounter < p.moves.size)
+
   def moveForward(orientation: Orientation, position: Position,
     game: Game, otherPlayers: Seq[Player] = Nil): Position = {
     val (x, y) = orientation match {
@@ -73,28 +95,6 @@ object Main {
       case Stay => orientation
       case _ => throw new Exception("This kind of move shouldn't be there.") // bhoo
     }
-  }
-
-  def isGameOver(players: Seq[Player]) =
-    !players.exists(p => p.movesCounter < p.moves.size)
-
-  def start(game: Game, drawFunc: Option[Game => Unit] = None): Game = {
-    def step(game: Game): Game = {
-      drawFunc.map(_.apply(game))
-
-      if (isGameOver(game.players)) {
-        val players = game.players.map { player => // we want to ignore the "Stay" moves
-          val numberOfStays = player.moves.count(_ == Stay)
-          player.copy(movesCounter = player.movesCounter - numberOfStays)
-        }
-        game.copy(players = players)
-      } else {
-        val (players, treasures) = computeMoves(game.players, Nil, game.treasures, game)
-        step(game.copy(players = players, treasures = treasures))
-      }
-    }
-
-    step(game)
   }
 
   private def computeMoves(left: Seq[Player], rest: Seq[Player],
